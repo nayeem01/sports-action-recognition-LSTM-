@@ -1,0 +1,9 @@
+opencv-python
+tensorflow
+numpy==1.21
+pickle-mixin
+matplotlib
+tqdm
+numba
+scikit-learn
+mediapipe
