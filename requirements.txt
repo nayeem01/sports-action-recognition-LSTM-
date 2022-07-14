@@ -1,6 +1,6 @@
 opencv-python
 tensorflow
-numpy==1.21
+numpy
 pickle-mixin
 matplotlib
 tqdm
