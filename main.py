@@ -30,9 +30,6 @@ class VideoWindow:
         self.videoPath = videoPath
         self.scale = scale
         self.sequence = []
-        self.sentence = []
-        self.predictions = []
-        self.threshold = 0.5
         self.actions = np.array(['SkateBoarding', 'Run-Side'])
 
     def rescaleFrame(self, frame):
@@ -41,6 +38,9 @@ class VideoWindow:
 
         dimensions = (width, height)
 
+        # self.video = cv.VideoWriter('output.avi',
+        #                             cv.VideoWriter_fourcc(*'MJPG'), 20.0,
+        #                             (1152, 648))
         return cv.resize(frame, dimensions, interpolation=cv.INTER_AREA)
 
     def mediapipe_detection(self, image, model):
@@ -49,36 +49,6 @@ class VideoWindow:
         results = model.process(image)
         image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
         return image, results
-
-    def draw_styled_landmarks(self, image, results):
-        # Draw face connections
-        mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACEMESH_CONTOURS,
-                                  mp_drawing.DrawingSpec(
-                                      color=(80, 110, 10), thickness=1, circle_radius=1),
-                                  mp_drawing.DrawingSpec(
-                                      color=(80, 256, 121), thickness=1, circle_radius=1)
-                                  )
-        # Draw pose connections
-        mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
-                                  mp_drawing.DrawingSpec(
-                                      color=(80, 22, 10), thickness=2, circle_radius=4),
-                                  mp_drawing.DrawingSpec(
-                                      color=(80, 44, 121), thickness=2, circle_radius=2)
-                                  )
-        # Draw left hand connections
-        mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
-                                  mp_drawing.DrawingSpec(
-                                      color=(121, 22, 76), thickness=2, circle_radius=4),
-                                  mp_drawing.DrawingSpec(
-                                      color=(121, 44, 250), thickness=2, circle_radius=2)
-                                  )
-        # Draw right hand connections
-        mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
-                                  mp_drawing.DrawingSpec(
-                                      color=(245, 117, 66), thickness=2, circle_radius=4),
-                                  mp_drawing.DrawingSpec(
-                                      color=(245, 66, 230), thickness=2, circle_radius=2)
-                                  )
 
     def extract_keypoints(self, results):
         pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten(
@@ -92,7 +62,11 @@ class VideoWindow:
         return np.concatenate([pose, face, lh, rh])
 
     def loadingVideo(self):
+
         cap = cv.VideoCapture(self.videoPath)
+        video = cv.VideoWriter('output.avi',
+                               cv.VideoWriter_fourcc(*'MJPG'), 20.0,
+                               (1152, 648))
         with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
             while cap.isOpened():
                 _, frame = cap.read()
@@ -113,7 +87,7 @@ class VideoWindow:
                         np.expand_dims(self.sequence, axis=0))[0]
                     # print(self.actions[np.argmax(res)])
                     print(res)
-                    self.predictions.append(np.argmax(res))
+                    # self.predictions.append(np.argmax(res))
 
                     str_classname = "SkateBoarding : {:.3f}".format(
                         res[0])
@@ -134,12 +108,15 @@ class VideoWindow:
                     landmark_drawing_spec=mp_drawing_styles
                     .get_default_pose_landmarks_style())
 
+                video.write(image)
+
                 cv.imshow('sports actions', image)
 
                 if cv.waitKey(1) & 0xFF == ord('d'):
                     break
 
             cap.release()
+            video.release()
             cv.destroyAllWindows()
 
 
@@ -153,8 +130,10 @@ if __name__ == "__main__":
     json_file = open('actions.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
+
     actions_model = model_from_json(loaded_model_json)
     actions_model.load_weights("actions.h5")
     font = cv.FONT_HERSHEY_SIMPLEX
-    video = VideoWindow('test/test2.mp4', 0.3)
+
+    video = VideoWindow('test/test1.mp4', 0.3)
     video.loadingVideo()
