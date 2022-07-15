@@ -1,4 +1,4 @@
-### Batting Shots Recognition LSTM
+### sports actions Recognition LSTM
 
 -   Dataset: https://www.crcv.ucf.edu/data/UCF_Sports_Action.php
 
